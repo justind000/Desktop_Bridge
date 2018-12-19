@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang='en'>
+
+<head>
+  <meta charset='utf-8'>
+  <link rel='icon' href='favicon.ico'>
+  <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <link rel='stylesheet' href='/static/css/bulma.min.css'>
+  <link rel='stylesheet' href='/static/css/bulma-switch.min.css'>
+  <link rel='stylesheet' href='/static/css/spinner.css'>
+  <script src='https://cdn.jsdelivr.net/npm/vue/dist/vue.js'></script>
+  <link rel='stylesheet' href='https://use.fontawesome.com/releases/v5.0.10/css/all.css' integrity='sha384-+d0P83n9kaQMCwj8F4RJB66tzIwOKmrdb46+porD/OvrJ+37WqIM7UoBtwHO6Nlg'
+    crossorigin='anonymous'>
+  <title>Water Quality HAT</title>
+</head>
+
+<body onload="app.connect()">
+  <section class='section' id='app'>
+    <div class='container'>
+      <section class='section'>
+        <div class='container'>
+          <div class='card'>
+            <header class='card-header'>
+              <p class='card-header-title'>{{! name }}&nbsp;&nbsp;
+                <span class='spinner spinner-slow spinner-blue' v-if='connected === true'></span>
+              </p>
+                <a href='#' class='card-header-icon' v-on:click='show_config = !show_config'>
+                    <span class='icon'>
+                        <i class="fas fa-sliders-h"></i>
+                    </span>
+                </a>
+                <a href='#' class='card-header-icon'>
+                <figure class="image is-32x32" v-on:click='connect'>
+                  <img src="/static/websocket.svg">
+                </figure>
+              </a>
+            </header>
+            <div class='card-content' v-show="pH_connected">
+              <div class='content'>
+                <div class='card has-text-centered'>
+                  <div class='card-content'>
+                    <p class='title'>{{! slot_1_value }}</p>
+                    <p class='subtitle'>{{! slot_1_unit }}</p>
+                    <div class='has-text-right' v-show="show_config">
+                        <a href="#">                
+                            <button class="button" v-on:click='ph_config_modal'>
+                            <span class='icon'>
+                                <i class="fas fa-sliders-h"></i>
+                            </span>
+                            </button>
+                        </a>
+                    </div>
+                  </div>
+                </div>
+                <div class='card has-text-centered' v-show="EC_connected">
+                  <div class='card-content'>
+                    <p class='title'>{{! slot_2_value }}</p>
+                    <p class='subtitle'>{{! slot_2_unit }}</p>
+                    <div class='has-text-right' v-show="show_config">
+                        <a href="#">                
+                            <button class="button" v-on:click='ec_config_modal'>
+                            <span class='icon' v-on:click='connect'>
+                                <i class="fas fa-sliders-h"></i>
+                            </span>
+                            </button>
+                        </a>
+                    </div>
+                  </div>
+                </div>
+                <div class='card has-text-centered' v-show="ORP_connected">
+                  <div class='card-content'>
+                    <p class='title'>{{! slot_3_value }}</p>
+                    <p class='subtitle'>{{! slot_3_unit}}</p>
+                  </div>
+                </div>
+                <div class='card has-text-centered'>
+                  <div class='card-content'>
+                    <p class='title'>{{! temp }}</p>
+                    <p class='subtitle'>{{! temp_unit }}</p>
+                  </div>
+                </div>
+                <!-- ^ card -->
+              </div>
+              <!--  ^content -->
+            </div>
+            <!-- ^ card-content -->
+          </div>
+          <!-- ^ card -->
+        </div>
+        <!-- ^ container -->
+      </section>
+    </div>
+    <!-- ^ container -->
+        <div class="ph_config_modal modal">
+        <div class="modal-background"></div>
+        
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">pH Configuration - {{! slot_1_value }} {{! slot_1_unit }}</p>
+                <button class="ph_modal_close delete"></button>
+            </header>
+            <section class="modal-card-body">
+                <table class="table is-striped is-narrow is-hoverable is-fullwidth">
+                <tbody>
+                <tr>
+                <td>Offset</td>
+                <td>{{! pH_offset }}</td>
+                <td><span class="button is-small" v-on:click='ph_calibrate'>Calibrate</span></td>
+                </tr>
+                <tr>
+                <td class="tooltip is-tooltip-bottom" data-tooltip="Turn using dual-point calibration on or off.">Dual Point</td>
+                <td></td>
+                <td><div class="field">
+                    <input id="dpSwitch" type="checkbox" name="dpSwitch" class="switch is-outlined is-info" checked="checked" v-model="pH_DP_Enabled">
+                    <label for="dpSwitch"></label>
+                    </div></td>
+                </tr>
+                <tr>
+                <td>&emsp;Low Reading | Reference</td>
+                <td>{{! pH_Low_Reading }} | {{! pH_Low_Reference }}</td>
+                <td><span class="button is-small" v-on:click='ph_low'>Calibrate</span></td>
+                </tr>
+                <tr>
+                <td>&emsp;High Reading | Reference</td>
+                <td>{{! pH_High_Reading }} | {{! pH_High_Reference }}</td>
+                <td><span class="button is-small" v-on:click='ph_high'>Calibrate</span></td>
+                </tr>
+                <tr>
+                <td>Temperature Compensation</td>
+                <td></td>
+                <td><div class="field">
+                    <input id="tcSwitch" type="checkbox" name="tcSwitch" class="switch is-outlined is-info" checked="checked" v-model="pH_TC_Enabled">
+                    <label for="tcSwitch"></label>
+                    </div></td>
+                </tr>
+                </tbody>
+                </table>
+            </section>
+            <footer class="modal-card-foot">
+            <button class="button is-danger" v-on:click="ph_reset">Reset</button>
+            </footer>
+        </div>
+    </div>
+
+        <div class="ec_config_modal modal">
+        <div class="modal-background"></div>
+        
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">EC Configuration - {{! slot_2_value }} {{! slot_2_unit }}</p>
+                <button class="ec_modal_close delete"></button>
+            </header>
+            <section class="modal-card-body">
+                <table class="table is-striped is-narrow is-hoverable is-fullwidth">
+                <tbody>
+                <tr>
+                <td>Calibration</td>
+                <td></td>
+                <td></td>
+                </tr>
+                <tr>
+                <td>&emsp;EC</td>
+                <td>{{! EC_calibration }}</td>
+                <td><span class="button is-small" v-on:click='calibrate_ec'>Calibrate</span></td>
+                </tr>
+                <tr>
+                <td>&emsp;SW</td>
+                <td>{{! SW_calibration }}</td>
+                <td><span class="button is-small" v-on:click='calibrate_sw'>Calibrate</span></td>
+                </tr>
+                <tr>
+                <td>Temperature Compensation</td>
+                <td></td>
+                <td><div class="field">
+                    <input id="ECtcSwitch" type="checkbox" name="ECtcSwitch" class="switch is-outlined is-info" checked="checked" v-model="EC_TC_Enabled">
+                    <label for="ECtcSwitch"></label>
+                    </div></td>
+                </tr>
+                <tr>
+                <td>&emsp;Temperature Constant</td>
+                <td>{{! EC_temp_const }}</td>
+                <td><span class="button is-small" v-on:click='temp_const'>Set</span></td>
+                </tr>
+                </tbody>
+                </table>
+            </section>
+            <footer class="modal-card-foot">
+            <button class="button is-danger" v-on:click="ec_reset">Reset</button>
+            </footer>
+        </div>
+    </div>
+  </section>
+  
+  <script src='/static/app.js'></script>
+</body>
+
+</html>
